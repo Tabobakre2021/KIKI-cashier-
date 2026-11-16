@@ -1,11 +1,15 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,12 +34,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -44,6 +50,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -58,6 +65,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -65,15 +73,25 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -93,6 +111,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -118,14 +137,23 @@ import com.example.ui.components.PackagingUnitDropdown
 import com.example.ui.components.buildSplitLines
 import com.example.ui.theme.KikiBurgundy
 import com.example.ui.theme.KikiBurgundyDeep
+import com.example.ui.theme.KikiErrorBg
+import com.example.ui.theme.KikiErrorText
 import com.example.ui.theme.KikiExpenseRed
 import com.example.ui.theme.KikiGold
 import com.example.ui.theme.KikiGoldSoft
 import com.example.ui.theme.KikiProfitGreen
 import com.example.ui.theme.KikiProfitGreenSoft
+import com.example.ui.theme.KikiSuccessBg
+import com.example.ui.theme.KikiSuccessText
+import com.example.ui.theme.KikiWarningAccent
+import com.example.ui.theme.KikiWarningBg
+import com.example.ui.theme.KikiWarningText
+
+private val PosEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
 private enum class PosMobileTab(val label: String) {
-    CATALOG("قوائم اختيار الأصناف"),
+    CATALOG("قوائم الأصناف"),
     INVOICE("الفاتورة الحالية")
 }
 
@@ -316,117 +344,149 @@ fun CashierPosScreen(
         } else {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
+                    // M3 Single-Select Segmented Button with Pill Corners & Cart Badge
                     Surface(
                         color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 2.dp,
+                        tonalElevation = 0.dp,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
+                        SingleChoiceSegmentedButtonRow(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            PosMobileTab.entries.forEach { tab ->
+                            PosMobileTab.entries.forEachIndexed { index, tab ->
                                 val selected = tab == mobileTab
-                                val title = if (tab == PosMobileTab.INVOICE && cartItemsCount > 0) {
-                                    "${tab.label} ($cartItemsCount)"
-                                } else tab.label
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .heightIn(min = 44.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable { mobileTab = tab }
-                                        .testTag("pos_tab_${tab.name.lowercase()}")
-                                ) {
-                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
-                                        Text(
-                                            text = title,
-                                            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
+                                SegmentedButton(
+                                    selected = selected,
+                                    onClick = { mobileTab = tab },
+                                    shape = SegmentedButtonDefaults.itemShape(
+                                        index = index,
+                                        count = PosMobileTab.entries.size
+                                    ),
+                                    colors = SegmentedButtonDefaults.colors(
+                                        activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    icon = {
+                                        SegmentedButtonDefaults.Icon(active = selected) {
+                                            Icon(
+                                                imageVector = if (tab == PosMobileTab.CATALOG) Icons.Filled.Category else Icons.Filled.ReceiptLong,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    },
+                                    label = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Text(
+                                                text = tab.label,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            if (tab == PosMobileTab.INVOICE && cartItemsCount > 0) {
+                                                Badge(
+                                                    containerColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                                ) {
+                                                    Text("$cartItemsCount")
+                                                }
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("pos_tab_${tab.name.lowercase()}")
+                                )
                             }
                         }
                     }
 
-                    if (mobileTab == PosMobileTab.CATALOG) {
-                        PosCatalogPane(
-                            allProductsCount = products.size,
-                            categoryProducts = categoryProducts,
-                            filteredProducts = filteredProducts,
-                            categoryCounts = categoryCounts,
-                            cart = cart,
-                            heldCarts = heldCarts,
-                            searchQuery = searchQuery,
-                            onSearchQueryChange = { searchQuery = it },
-                            selectedCategory = selectedCategory,
-                            onCategoryChange = { selectedCategory = it },
-                            quickStep = quickStep,
-                            onQuickStepChange = { quickStep = it },
-                            bottomPadding = if (cart.isNotEmpty()) 112.dp else 18.dp,
-                            onAddProductToCart = { prod, qty, unit, mult ->
-                                if (prod.sellingPrice > 0L) {
-                                    onAddToCart(prod, qty, unit, mult, null)
-                                } else if (canEditInvoicePrice) {
-                                    onNavigateToPricing()
-                                } else {
-                                    onAddToCart(prod, qty, unit, mult, null)
-                                }
-                            },
-                            onDecrementProduct = { prodId -> onDecrementProduct(prodId, quickStep) },
-                            onOpenKeypadForProduct = { quickAddProduct = it },
-                            onResumeHeldCart = onResumeHeldCart,
-                            onDiscardHeldCart = onDiscardHeldCart
-                        )
-                    } else {
-                        PosLiveInvoicePane(
-                            cart = cart,
-                            cartSubtotal = cartSubtotal,
-                            customers = customers,
-                            canApplyDiscount = canEditInvoicePrice,
-                            allowCreditSales = allowCreditSales,
-                            discountText = discountText,
-                            onDiscountChange = { discountText = it },
-                            selectedCustomer = selectedCustomer,
-                            onCustomerChange = { selectedCustomer = it },
-                            isSplitMode = isSplitMode,
-                            onSplitModeChange = { isSplitMode = it },
-                            singleChannel = singleChannel,
-                            onSingleChannelChange = { singleChannel = it },
-                            splitAmounts = splitAmounts,
-                            onSplitAmountChange = { ch, v -> splitAmounts[ch] = v },
-                            receiptNumber = receiptNumber,
-                            onReceiptNumberChange = { receiptNumber = it },
-                            operationNumber = operationNumber,
-                            onOperationNumberChange = { operationNumber = it },
-                            receiptNote = receiptNote,
-                            onReceiptNoteChange = { receiptNote = it },
-                            onUpdateCartItem = { idx, q, u -> onUpdateCartItem(idx, q, u, null, null, true) },
-                            onOpenEditLine = { idx -> editingLineIndex = idx },
-                            onHoldCart = {
-                                onHoldCart("")
-                                resetCheckoutFields()
-                                mobileTab = PosMobileTab.CATALOG
-                            },
-                            onClearCart = {
-                                onClearCart()
-                                resetCheckoutFields()
-                            },
-                            onConfirmSale = { discount, allocs ->
-                                onCompleteSale(discount, allocs, selectedCustomer?.id, receiptNote)
-                                resetCheckoutFields()
-                                mobileTab = PosMobileTab.CATALOG
-                            },
-                            onSwitchToCatalog = { mobileTab = PosMobileTab.CATALOG }
-                        )
+                    AnimatedContent(
+                        targetState = mobileTab,
+                        transitionSpec = {
+                            fadeIn(tween(200, easing = PosEasing)) togetherWith
+                                fadeOut(tween(150, easing = PosEasing))
+                        },
+                        label = "pos_mobile_tab",
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    ) { activeTab ->
+                        if (activeTab == PosMobileTab.CATALOG) {
+                            PosCatalogPane(
+                                allProductsCount = products.size,
+                                categoryProducts = categoryProducts,
+                                filteredProducts = filteredProducts,
+                                categoryCounts = categoryCounts,
+                                cart = cart,
+                                heldCarts = heldCarts,
+                                searchQuery = searchQuery,
+                                onSearchQueryChange = { searchQuery = it },
+                                selectedCategory = selectedCategory,
+                                onCategoryChange = { selectedCategory = it },
+                                quickStep = quickStep,
+                                onQuickStepChange = { quickStep = it },
+                                bottomPadding = if (cart.isNotEmpty()) 112.dp else 18.dp,
+                                onAddProductToCart = { prod, qty, unit, mult ->
+                                    if (prod.sellingPrice > 0L) {
+                                        onAddToCart(prod, qty, unit, mult, null)
+                                    } else if (canEditInvoicePrice) {
+                                        onNavigateToPricing()
+                                    } else {
+                                        onAddToCart(prod, qty, unit, mult, null)
+                                    }
+                                },
+                                onDecrementProduct = { prodId -> onDecrementProduct(prodId, quickStep) },
+                                onOpenKeypadForProduct = { quickAddProduct = it },
+                                onResumeHeldCart = onResumeHeldCart,
+                                onDiscardHeldCart = onDiscardHeldCart
+                            )
+                        } else {
+                            PosLiveInvoicePane(
+                                cart = cart,
+                                cartSubtotal = cartSubtotal,
+                                customers = customers,
+                                canApplyDiscount = canEditInvoicePrice,
+                                allowCreditSales = allowCreditSales,
+                                discountText = discountText,
+                                onDiscountChange = { discountText = it },
+                                selectedCustomer = selectedCustomer,
+                                onCustomerChange = { selectedCustomer = it },
+                                isSplitMode = isSplitMode,
+                                onSplitModeChange = { isSplitMode = it },
+                                singleChannel = singleChannel,
+                                onSingleChannelChange = { singleChannel = it },
+                                splitAmounts = splitAmounts,
+                                onSplitAmountChange = { ch, v -> splitAmounts[ch] = v },
+                                receiptNumber = receiptNumber,
+                                onReceiptNumberChange = { receiptNumber = it },
+                                operationNumber = operationNumber,
+                                onOperationNumberChange = { operationNumber = it },
+                                receiptNote = receiptNote,
+                                onReceiptNoteChange = { receiptNote = it },
+                                onUpdateCartItem = { idx, q, u -> onUpdateCartItem(idx, q, u, null, null, true) },
+                                onOpenEditLine = { idx -> editingLineIndex = idx },
+                                onHoldCart = {
+                                    onHoldCart("")
+                                    resetCheckoutFields()
+                                    mobileTab = PosMobileTab.CATALOG
+                                },
+                                onClearCart = {
+                                    onClearCart()
+                                    resetCheckoutFields()
+                                },
+                                onConfirmSale = { discount, allocs ->
+                                    onCompleteSale(discount, allocs, selectedCustomer?.id, receiptNote)
+                                    resetCheckoutFields()
+                                    mobileTab = PosMobileTab.CATALOG
+                                },
+                                onSwitchToCatalog = { mobileTab = PosMobileTab.CATALOG }
+                            )
+                        }
                     }
                 }
 
@@ -695,6 +755,7 @@ fun CashierPosScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PosCatalogPane(
     allProductsCount: Int,
@@ -745,17 +806,24 @@ private fun PosCatalogPane(
         ) {
             // Held Invoices Quick Restore Bar
             if (heldCarts.isNotEmpty()) {
-                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("فواتير معلقة:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text(
+                            text = "فواتير معلقة:",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                         heldCarts.forEach { held ->
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                color = KikiGoldSoft,
+                                color = KikiWarningBg,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
                                     .clickable { onResumeHeldCart(held.id) }
@@ -768,14 +836,16 @@ private fun PosCatalogPane(
                                         "${held.label} (${held.items.size})",
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF78350F)
+                                        color = KikiWarningText
                                     )
                                     Spacer(Modifier.width(6.dp))
                                     Icon(
                                         Icons.Filled.Close,
                                         contentDescription = "حذف الفاتورة المعلقة",
-                                        tint = Color(0xFF78350F),
-                                        modifier = Modifier.size(16.dp).clickable { onDiscardHeldCart(held.id) }
+                                        tint = KikiWarningText,
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clickable { onDiscardHeldCart(held.id) }
                                     )
                                 }
                             }
@@ -784,20 +854,23 @@ private fun PosCatalogPane(
                 }
             }
 
-            // CASCADING DROPDOWNS CARD: القائمة الرئيسية (ستارة الأقسام) -> القائمة الفرعية (ستارة الأصناف)
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+            // M3 Cascading Exposed Dropdown Menus + Quick Add Stepper Card
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
-                    shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), MaterialTheme.shapes.medium)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        // Compact single-line header to preserve vertical screen space
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -807,75 +880,60 @@ private fun PosCatalogPane(
                                 contentDescription = "شعار كي كي",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
-                                    .size(30.dp)
+                                    .size(28.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(Color.White)
-                                    .border(1.dp, KikiGold, RoundedCornerShape(8.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
                                     .padding(1.dp)
                             )
-                            Column {
-                                Text(
-                                    text = "اختيار الصنف عبر القوائم المتدرجة",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = "اختر القائمة الرئيسية (القسم) ثم اختر الصنف من قائمته مباشرة",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            Text(
+                                text = "اختيار الصنف المتدرج",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
 
-                        // 1. القائمة الرئيسية (ستارة الأقسام)
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            Surface(
-                                shape = MaterialTheme.shapes.small,
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f),
+                        // 1. M3 Exposed Dropdown Menu — القائمة الرئيسية (القسم)
+                        ExposedDropdownMenuBox(
+                            expanded = mainMenuExpanded,
+                            onExpandedChange = { mainMenuExpanded = !mainMenuExpanded },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            val catLabel = selectedCategory?.let {
+                                "${it.arabicTitle} (${categoryCounts[it] ?: 0} أصناف)"
+                            } ?: "عرض جميع الأقسام ($allProductsCount صنف)"
+
+                            OutlinedTextField(
+                                value = catLabel,
+                                onValueChange = {},
+                                readOnly = true,
+                                singleLine = true,
+                                label = { Text("1. القائمة الرئيسية (القسم)") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Category,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = mainMenuExpanded)
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 54.dp)
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small)
-                                    .clip(MaterialTheme.shapes.small)
-                                    .clickable { mainMenuExpanded = true }
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                                     .testTag("main_category_dropdown")
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Icon(Icons.Filled.Category, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                        Spacer(Modifier.width(10.dp))
-                                        Column {
-                                            Text(
-                                                text = "1. القائمة الرئيسية (القسم)",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            val catLabel = selectedCategory?.let {
-                                                "${it.arabicTitle} (${categoryCounts[it] ?: 0} أصناف)"
-                                            } ?: "كل الأقسام ($allProductsCount صنف)"
-                                            Text(
-                                                text = catLabel,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "فتح القائمة الرئيسية")
-                                }
-                            }
+                            )
 
-                            DropdownMenu(
+                            ExposedDropdownMenu(
                                 expanded = mainMenuExpanded,
-                                onDismissRequest = { mainMenuExpanded = false },
-                                modifier = Modifier.fillMaxWidth(0.86f)
+                                onDismissRequest = { mainMenuExpanded = false }
                             ) {
                                 ProductCategory.entries.forEach { category ->
                                     val count = categoryCounts[category] ?: 0
@@ -893,13 +951,14 @@ private fun PosCatalogPane(
                                                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                                 )
                                                 Surface(
-                                                    shape = RoundedCornerShape(50),
-                                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                                                    shape = CircleShape,
+                                                    color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
                                                 ) {
                                                     Text(
                                                         text = "$count",
                                                         style = MaterialTheme.typography.labelSmall,
-                                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                                     )
                                                 }
@@ -916,7 +975,7 @@ private fun PosCatalogPane(
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            "عرض جميع الأقسام ($allProductsCount صنف)",
+                                            text = "عرض جميع الأقسام ($allProductsCount صنف)",
                                             fontWeight = if (selectedCategory == null) FontWeight.Bold else FontWeight.Normal
                                         )
                                     },
@@ -929,56 +988,47 @@ private fun PosCatalogPane(
                             }
                         }
 
-                        // 2. القائمة الفرعية (ستارة منتجات القائمة المختارة)
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            Surface(
-                                shape = MaterialTheme.shapes.small,
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                        // 2. M3 Exposed Dropdown Menu — قائمة أصناف القسم المختار
+                        ExposedDropdownMenuBox(
+                            expanded = subProductMenuExpanded,
+                            onExpandedChange = { subProductMenuExpanded = !subProductMenuExpanded },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            val currentProdText = pickedProduct?.let { p ->
+                                "${p.name} — ${if (p.sellingPrice > 0L) PricingEngine.formatCurrency(p.sellingPrice) else "غير مسعّر"}"
+                            } ?: "اضغط لاختيار الصنف"
+
+                            OutlinedTextField(
+                                value = currentProdText,
+                                onValueChange = {},
+                                readOnly = true,
+                                singleLine = true,
+                                label = { Text("2. أصناف القسم (${selectedCategory?.shortTitle ?: "الكل"})") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Inventory2,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = subProductMenuExpanded)
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 56.dp)
-                                    .border(1.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small)
-                                    .clip(MaterialTheme.shapes.small)
-                                    .clickable { subProductMenuExpanded = true }
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                                     .testTag("sub_product_dropdown")
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Icon(Icons.Filled.Inventory2, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                        Spacer(Modifier.width(10.dp))
-                                        Column {
-                                            Text(
-                                                text = "2. قائمة أصناف (${selectedCategory?.shortTitle ?: "الكل"})",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            val currentProdText = pickedProduct?.let { p ->
-                                                "${p.name} — ${if (p.sellingPrice > 0L) PricingEngine.formatCurrency(p.sellingPrice) else "غير مسعّر"}"
-                                            } ?: "اضغط لاختيار الصنف"
-                                            Text(
-                                                text = currentProdText,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "فتح قائمة الأصناف")
-                                }
-                            }
+                            )
 
-                            DropdownMenu(
+                            ExposedDropdownMenu(
                                 expanded = subProductMenuExpanded,
                                 onDismissRequest = { subProductMenuExpanded = false },
-                                modifier = Modifier
-                                    .fillMaxWidth(0.88f)
-                                    .heightIn(max = 340.dp)
+                                modifier = Modifier.heightIn(max = 320.dp)
                             ) {
                                 if (categoryProducts.isEmpty()) {
                                     DropdownMenuItem(
@@ -988,6 +1038,8 @@ private fun PosCatalogPane(
                                 } else {
                                     categoryProducts.forEach { prod ->
                                         val isPicked = pickedProduct?.id == prod.id
+                                        val hasPrice = prod.sellingPrice > 0L
+                                        val isLow = prod.stockQuantity <= prod.lowStockThreshold
                                         DropdownMenuItem(
                                             text = {
                                                 Row(
@@ -1004,19 +1056,19 @@ private fun PosCatalogPane(
                                                         Text(
                                                             text = "المتاح: ${PricingEngine.formatQty(prod.stockQuantity)} ${prod.defaultUnit.arabicLabel}",
                                                             style = MaterialTheme.typography.labelSmall,
-                                                            color = if (prod.stockQuantity <= prod.lowStockThreshold) KikiExpenseRed else MaterialTheme.colorScheme.onSurfaceVariant
+                                                            color = if (isLow) KikiErrorText else MaterialTheme.colorScheme.onSurfaceVariant
                                                         )
                                                     }
                                                     Spacer(Modifier.width(8.dp))
                                                     Surface(
                                                         shape = RoundedCornerShape(8.dp),
-                                                        color = KikiProfitGreenSoft
+                                                        color = if (hasPrice) KikiSuccessBg else KikiErrorBg
                                                     ) {
                                                         Text(
-                                                            text = if (prod.sellingPrice > 0L) PricingEngine.formatCurrency(prod.sellingPrice) else "غير مسعّر",
+                                                            text = if (hasPrice) PricingEngine.formatCurrency(prod.sellingPrice) else "غير مسعّر",
                                                             style = MaterialTheme.typography.labelMedium,
                                                             fontWeight = FontWeight.Bold,
-                                                            color = KikiProfitGreen,
+                                                            color = if (hasPrice) KikiSuccessText else KikiErrorText,
                                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                                         )
                                                     }
@@ -1034,16 +1086,18 @@ private fun PosCatalogPane(
                             }
                         }
 
-                        // 3. شريط الإضافة السريعة للصنف المختار من القائمة المتدرجة
+                        // 3. بطاقة تسعير وإضافة الصنف: Suggestion Chips + M3 Tonal Stepper (48dp) + FilledButton (48dp)
                         pickedProduct?.let { prod ->
                             Surface(
-                                shape = MaterialTheme.shapes.small,
-                                color = KikiProfitGreenSoft.copy(alpha = 0.65f),
-                                modifier = Modifier.fillMaxWidth()
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -1051,92 +1105,140 @@ private fun PosCatalogPane(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(prod.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                                             Text(
-                                                "سعر الوحدة: ${PricingEngine.formatCurrency(prod.sellingPrice)} | المتاح: ${PricingEngine.formatQty(prod.stockQuantity)} ${prod.defaultUnit.arabicLabel}",
+                                                text = prod.name,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = "السعر: ${PricingEngine.formatCurrency(prod.sellingPrice)} • المتاح: ${PricingEngine.formatQty(prod.stockQuantity)} ${prod.defaultUnit.arabicLabel}",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                         val previewTotal = PricingEngine.calculateLineTotal(prod.sellingPrice, pickedQty)
-                                        Text(
-                                            text = PricingEngine.formatCurrency(previewTotal),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = KikiProfitGreen
-                                        )
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = KikiSuccessBg
+                                        ) {
+                                            Text(
+                                                text = PricingEngine.formatCurrency(previewTotal),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = KikiSuccessText,
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                            )
+                                        }
                                     }
 
-                                    // Quick weight/qty chips
+                                    // Uniform M3 Suggestion / Filter Chips for quick weights & keypad
                                     Row(
-                                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         presetWeights.forEach { w ->
                                             val active = pickedQty == w
-                                            Surface(
-                                                shape = RoundedCornerShape(8.dp),
-                                                color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .clickable { pickedQty = w }
-                                            ) {
+                                            FilterChip(
+                                                selected = active,
+                                                onClick = { pickedQty = w },
+                                                label = {
+                                                    Text(
+                                                        text = PricingEngine.formatQty(w),
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        maxLines = 1,
+                                                        softWrap = false
+                                                    )
+                                                },
+                                                shape = RoundedCornerShape(10.dp),
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                ),
+                                                modifier = Modifier.height(36.dp)
+                                            )
+                                        }
+                                        SuggestionChip(
+                                            onClick = { onOpenKeypadForProduct(prod) },
+                                            label = {
                                                 Text(
-                                                    text = PricingEngine.formatQty(w),
+                                                    text = "لوحة أرقام",
                                                     style = MaterialTheme.typography.labelMedium,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = if (active) Color.White else MaterialTheme.colorScheme.onSurface,
-                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                                    maxLines = 1,
+                                                    softWrap = false
                                                 )
-                                            }
-                                        }
+                                            },
+                                            icon = {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Tune,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                labelColor = MaterialTheme.colorScheme.primary,
+                                                iconContentColor = MaterialTheme.colorScheme.primary
+                                            ),
+                                            modifier = Modifier.height(36.dp)
+                                        )
+                                    }
+
+                                    // Aligned 48dp M3 Tonal Stepper + 48dp FilledButton
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = MaterialTheme.colorScheme.surface,
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .clickable { onOpenKeypadForProduct(prod) }
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            modifier = Modifier.height(48.dp)
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                                modifier = Modifier.padding(horizontal = 4.dp)
                                             ) {
-                                                Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
-                                                Spacer(Modifier.width(4.dp))
-                                                Text("لوحة أرقام / وحدة", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                            }
-                                        }
-                                    }
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(MaterialTheme.colorScheme.surface)
-                                                .padding(horizontal = 4.dp)
-                                        ) {
-                                            IconButton(
-                                                onClick = { if (pickedQty > 0.25) pickedQty = (pickedQty - 0.5).coerceAtLeast(0.25) },
-                                                modifier = Modifier.size(38.dp)
-                                            ) {
-                                                Icon(Icons.Filled.Remove, contentDescription = "إنقاص")
-                                            }
-                                            Text(
-                                                text = "${PricingEngine.formatQty(pickedQty)} ${pickedUnit.arabicLabel}",
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            IconButton(
-                                                onClick = { pickedQty += 0.5 },
-                                                modifier = Modifier.size(38.dp)
-                                            ) {
-                                                Icon(Icons.Filled.Add, contentDescription = "زيادة")
+                                                IconButton(
+                                                    onClick = {
+                                                        if (pickedQty > 0.25) {
+                                                            pickedQty = (pickedQty - 0.5).coerceAtLeast(0.25)
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(40.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Remove,
+                                                        contentDescription = "إنقاص",
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                }
+                                                Text(
+                                                    text = "${PricingEngine.formatQty(pickedQty)} ${pickedUnit.arabicLabel}",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    softWrap = false,
+                                                    modifier = Modifier.padding(horizontal = 6.dp)
+                                                )
+                                                IconButton(
+                                                    onClick = { pickedQty += 0.5 },
+                                                    modifier = Modifier.size(40.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Add,
+                                                        contentDescription = "زيادة",
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                }
                                             }
                                         }
 
@@ -1144,14 +1246,28 @@ private fun PosCatalogPane(
                                             onClick = {
                                                 onAddProductToCart(prod, pickedQty, pickedUnit, 1.0)
                                             },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = KikiSuccessText,
+                                                contentColor = Color.White
+                                            ),
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .heightIn(min = 46.dp)
+                                                .height(48.dp)
                                                 .testTag("cascading_add_to_invoice_btn")
                                         ) {
-                                            Icon(Icons.Filled.AddShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Icon(
+                                                imageVector = Icons.Filled.AddShoppingCart,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
                                             Spacer(Modifier.width(6.dp))
-                                            Text("إضافة للفاتورة", fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = "إضافة للفاتورة",
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
                                         }
                                     }
                                 }
@@ -1161,25 +1277,70 @@ private fun PosCatalogPane(
                 }
             }
 
-            // Instant Search + Quick-Tap Grid of the selected Category below
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = onSearchQueryChange,
-                        placeholder = { Text("بحث فوري في جميع الأصناف (فراخ، صدور، جبنة...)...") },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        trailingIcon = {
+            // M3 Pill Search Bar + Quick Step Chips
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "بحث",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Box(
+                                contentAlignment = Alignment.CenterStart,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                if (searchQuery.isEmpty()) {
+                                    Text(
+                                        text = "بحث فوري في جميع الأصناف...",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                BasicTextField(
+                                    value = searchQuery,
+                                    onValueChange = onSearchQueryChange,
+                                    singleLine = true,
+                                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("pos_search_input")
+                                )
+                            }
                             if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { onSearchQueryChange("") }) {
-                                    Icon(Icons.Filled.Close, contentDescription = "مسح البحث")
+                                IconButton(
+                                    onClick = { onSearchQueryChange("") },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Close,
+                                        contentDescription = "مسح البحث",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
                                 }
                             }
-                        },
-                        singleLine = true,
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.fillMaxWidth().testTag("pos_search_input")
-                    )
+                        }
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1191,22 +1352,29 @@ private fun PosCatalogPane(
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             listOf(0.5, 1.0, 2.0).forEach { step ->
                                 val active = quickStep == step
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable { onQuickStepChange(step) }
-                                ) {
-                                    Text(
-                                        text = "×${PricingEngine.formatQty(step)}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (active) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                    )
-                                }
+                                FilterChip(
+                                    selected = active,
+                                    onClick = { onQuickStepChange(step) },
+                                    label = {
+                                        Text(
+                                            text = "×${PricingEngine.formatQty(step)}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    modifier = Modifier.height(30.dp)
+                                )
                             }
                         }
                     }
@@ -1214,7 +1382,7 @@ private fun PosCatalogPane(
             }
 
             if (filteredProducts.isEmpty()) {
-                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().padding(24.dp)) {
                         Text("لا توجد أصناف مطابقة للبحث الحالي.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -1246,35 +1414,49 @@ private fun PosProductCard(
     onCustomUnitTap: () -> Unit
 ) {
     val hasPrice = product.sellingPrice > 0L
-    val isLowStock = product.stockQuantity <= product.lowStockThreshold
+    val isOut = product.stockQuantity <= 0.0
+    val isLowStock = !isOut && product.stockQuantity <= product.lowStockThreshold
 
     Card(
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (qtyInCart > 0) 4.dp else 1.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (qtyInCart > 0) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (qtyInCart > 0) 2.dp else 0.dp),
         modifier = Modifier
             .fillMaxWidth()
             .border(
-                width = if (qtyInCart > 0) 2.dp else 1.dp,
+                width = if (qtyInCart > 0) 1.5.dp else 1.dp,
                 color = if (qtyInCart > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(16.dp)
             )
-            .clip(MaterialTheme.shapes.medium)
+            .clip(RoundedCornerShape(16.dp))
             .clickable { onQuickTap() }
             .testTag("pos_product_${product.id}")
     ) {
-        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                val badgeBg = when {
+                    isOut -> KikiErrorBg
+                    isLowStock -> KikiWarningBg
+                    else -> MaterialTheme.colorScheme.surfaceContainerHigh
+                }
+                val badgeFg = when {
+                    isOut -> KikiErrorText
+                    isLowStock -> KikiWarningText
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                Surface(shape = RoundedCornerShape(8.dp), color = badgeBg) {
                     Text(
                         text = "${product.defaultUnit.arabicLabel} • ${PricingEngine.formatQty(product.stockQuantity)}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isLowStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        fontWeight = FontWeight.Medium,
+                        color = badgeFg,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                     )
                 }
 
@@ -1283,13 +1465,18 @@ private fun PosProductCard(
                         Text(
                             text = PricingEngine.formatQty(qtyInCart),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
-                } else if (isLowStock) {
-                    Icon(Icons.Filled.Warning, contentDescription = "مخزون منخفض", tint = KikiGold, modifier = Modifier.size(16.dp))
+                } else if (isLowStock || isOut) {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = "تنبيه مخزون",
+                        tint = if (isOut) KikiErrorText else KikiWarningAccent,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
 
@@ -1297,9 +1484,10 @@ private fun PosProductCard(
                 text = product.name,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.heightIn(min = 38.dp)
+                modifier = Modifier.heightIn(min = 40.dp)
             )
 
             Row(
@@ -1307,31 +1495,43 @@ private fun PosProductCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (hasPrice) PricingEngine.formatCurrency(product.sellingPrice) else "غير مسعّر",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (hasPrice) KikiProfitGreen else MaterialTheme.colorScheme.error,
-                    modifier = Modifier.weight(1f)
-                )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (hasPrice) KikiSuccessBg else KikiErrorBg,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Text(
+                        text = if (hasPrice) PricingEngine.formatCurrency(product.sellingPrice) else "غير مسعّر",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (hasPrice) KikiSuccessText else KikiErrorText,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
 
-                IconButton(
+                Spacer(Modifier.width(6.dp))
+
+                FilledTonalIconButton(
                     onClick = onCustomUnitTap,
-                    modifier = Modifier.minimumInteractiveComponentSize().size(40.dp)
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         Icons.Filled.Tune,
                         contentDescription = "تحديد وزن أو وحدة مخصصة",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
             if (qtyInCart > 0) {
                 Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
-                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -1343,19 +1543,29 @@ private fun PosProductCard(
                             onClick = onDecrementTap,
                             modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(Icons.Filled.Remove, contentDescription = "إنقاص ${PricingEngine.formatQty(quickStep)}", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                            Icon(
+                                Icons.Filled.Remove,
+                                contentDescription = "إنقاص ${PricingEngine.formatQty(quickStep)}",
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                         Text(
                             text = "${PricingEngine.formatQty(qtyInCart)} ${product.defaultUnit.arabicLabel}",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         IconButton(
                             onClick = onQuickTap,
                             modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(Icons.Filled.Add, contentDescription = "إضافة ${PricingEngine.formatQty(quickStep)}", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                            Icon(
+                                Icons.Filled.Add,
+                                contentDescription = "إضافة ${PricingEngine.formatQty(quickStep)}",
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                 }

@@ -38,6 +38,8 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -63,7 +65,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -72,6 +73,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.entity.UserEntity
 import com.example.data.repository.PaymentSplitLine
@@ -82,12 +84,12 @@ import com.example.domain.PackagingUnit
 import com.example.domain.PricingEngine
 import com.example.domain.PricingMode
 import com.example.domain.WalletChannel
-import com.example.ui.theme.KikiBurgundy
-import com.example.ui.theme.KikiBurgundyDeep
 import com.example.ui.theme.KikiExpenseRed
-import com.example.ui.theme.KikiGold
+import com.example.ui.theme.KikiPrimary
 import com.example.ui.theme.KikiProfitGreen
 import com.example.ui.theme.KikiProfitGreenSoft
+import com.example.ui.theme.KikiSecondaryContainer
+import com.example.ui.theme.KikiOnSecondaryContainer
 
 @Composable
 fun KikiBrandHeader(
@@ -96,100 +98,119 @@ fun KikiBrandHeader(
     onSwitchUser: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Brush.linearGradient(colors = listOf(KikiBurgundyDeep, KikiBurgundy)))
-            .statusBarsPadding()
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+    Surface(
+        color = KikiPrimary,
+        contentColor = Color.White,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .heightIn(min = 64.dp)
+                .padding(start = 6.dp, end = 10.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+            // Far Right in RTL: Hamburger Menu
+            IconButton(
+                onClick = onOpenDrawer,
+                modifier = Modifier
+                    .size(44.dp)
+                    .testTag("open_drawer_button")
             ) {
-                IconButton(
-                    onClick = onOpenDrawer,
-                    modifier = Modifier.testTag("open_drawer_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Menu,
-                        contentDescription = "القائمة الرئيسية",
-                        tint = Color.White
-                    )
-                }
-
-                Image(
-                    painter = painterResource(id = R.drawable.img_kiki_logo),
-                    contentDescription = "شعار مركز كي كي للدواجن",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White)
-                        .border(1.5.dp, KikiGold, RoundedCornerShape(12.dp))
-                        .padding(2.dp)
+                Icon(
+                    imageVector = Icons.Filled.Menu,
+                    contentDescription = "القائمة الرئيسية",
+                    tint = Color.White
                 )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Text(
-                        text = "KIKI - مركز كي كي للدواجن",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "دائماً فكر بالمذاق الطازج",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = KikiGold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
             }
 
+            // KIKI Logo 40x40dp with 12dp rounded corners
+            Image(
+                painter = painterResource(id = R.drawable.img_kiki_logo),
+                contentDescription = "شعار مركز كي كي للدواجن",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White)
+                    .border(1.dp, KikiSecondaryContainer, RoundedCornerShape(12.dp))
+                    .padding(2.dp)
+            )
+
+            Spacer(modifier = Modifier.width(2.dp))
+
+            // Full App Title + Tagline without truncation
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "KIKI - مركز كي كي للدواجن",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp
+                    ),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Clip
+                )
+                Text(
+                    text = "دائماً فكر بالمذاق الطازج",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = KikiSecondaryContainer,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Far Left in RTL: Compact M3 Assist Chip (Account / Logout)
             if (currentUser != null) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color.White.copy(alpha = 0.14f),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .clickable { onSwitchUser() }
-                        .testTag("switch_user_button")
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
+                AssistChip(
+                    onClick = onSwitchUser,
+                    label = {
+                        Text(
+                            text = if (currentUser.isAdmin) "المدير" else "خروج",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    },
+                    leadingIcon = {
                         Icon(
                             imageVector = if (currentUser.canViewProfits) Icons.Filled.Shield else Icons.Filled.AccountBalanceWallet,
-                            contentDescription = "حساب المستخدم",
-                            tint = KikiGold,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Text(
-                            text = currentUser.displayName,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "خروج",
-                            tint = Color.White.copy(alpha = 0.85f),
+                            contentDescription = "حساب ${currentUser.displayName}",
                             modifier = Modifier.size(15.dp)
                         )
-                    }
-                }
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "تسجيل الخروج",
+                            modifier = Modifier.size(14.dp)
+                        )
+                    },
+                    shape = CircleShape,
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = Color.White.copy(alpha = 0.14f),
+                        labelColor = Color.White,
+                        leadingIconContentColor = KikiSecondaryContainer,
+                        trailingIconContentColor = Color.White.copy(alpha = 0.9f)
+                    ),
+                    border = AssistChipDefaults.assistChipBorder(
+                        enabled = true,
+                        borderColor = Color.White.copy(alpha = 0.28f)
+                    ),
+                    modifier = Modifier
+                        .height(34.dp)
+                        .testTag("switch_user_button")
+                )
             }
         }
     }
@@ -246,8 +267,8 @@ fun WalletBalanceStrip(
 
                 Card(
                     shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier
                         .width(156.dp)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
@@ -712,7 +733,7 @@ fun KikiChartsCard(
 ) {
     Card(
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = modifier
             .fillMaxWidth()
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)

@@ -5,6 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,8 +28,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -61,12 +70,16 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -81,7 +94,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -90,6 +102,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -114,11 +127,12 @@ import com.example.ui.screens.SplashScreen
 import com.example.ui.screens.UsersManagementScreen
 import com.example.ui.screens.WalletsScreen
 import com.example.ui.screens.ZReportScreen
-import com.example.ui.theme.KikiBurgundy
-import com.example.ui.theme.KikiBurgundyDeep
-import com.example.ui.theme.KikiGold
+import com.example.ui.theme.KikiPrimary
+import com.example.ui.theme.KikiSecondaryContainer
 import com.example.ui.theme.KikiTheme
 import kotlinx.coroutines.launch
+
+private val M3StandardEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
 private enum class AppSection(
     val title: String,
@@ -228,34 +242,88 @@ private fun KikiRootApp(viewModel: MainViewModel = viewModel()) {
         }
 
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        val drawerGroups = remember(allowedSections) {
+            listOf(
+                "العمليات اليومية" to listOf(
+                    AppSection.DASHBOARD,
+                    AppSection.POS,
+                    AppSection.INVENTORY,
+                    AppSection.PURCHASES
+                ),
+                "الإدارة المالية والعملاء" to listOf(
+                    AppSection.EXPENSES,
+                    AppSection.RETURNS,
+                    AppSection.PARTIES,
+                    AppSection.WALLETS
+                ),
+                "النظام والتقارير" to listOf(
+                    AppSection.ZREPORT,
+                    AppSection.REPORTS,
+                    AppSection.USERS,
+                    AppSection.BACKUP,
+                    AppSection.SETTINGS
+                )
+            ).mapNotNull { (groupTitle, sections) ->
+                val filtered = sections.filter { it in allowedSections }
+                if (filtered.isEmpty()) null else groupTitle to filtered
+            }
+        }
 
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
-                ModalDrawerSheet {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Brush.linearGradient(listOf(KikiBurgundyDeep, KikiBurgundy)))
-                            .padding(16.dp)
+                ModalDrawerSheet(
+                    drawerShape = RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp),
+                    drawerContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    drawerContentColor = MaterialTheme.colorScheme.onSurface
+                ) {
+                    Surface(
+                        color = KikiPrimary,
+                        contentColor = Color.White,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .statusBarsPadding()
+                                .padding(horizontal = 16.dp, vertical = 16.dp)
+                        ) {
                             Image(
                                 painter = painterResource(id = R.drawable.img_kiki_logo),
                                 contentDescription = "شعار كي كي",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
-                                    .size(52.dp)
+                                    .size(48.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color.White)
-                                    .border(1.5.dp, KikiGold, RoundedCornerShape(12.dp))
+                                    .border(1.5.dp, KikiSecondaryContainer, RoundedCornerShape(12.dp))
                                     .padding(2.dp)
                             )
                             Spacer(Modifier.width(12.dp))
-                            Column {
-                                Text("KIKI - مركز كي كي للدواجن", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                                Text("دائماً فكر بالمذاق الطازج", color = KikiGold, style = MaterialTheme.typography.labelSmall)
-                                Text("${currentUser.displayName} • ${currentUser.roleTitle}", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "KIKI - مركز كي كي للدواجن",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "دائماً فكر بالمذاق الطازج",
+                                    color = KikiSecondaryContainer,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = "${currentUser.displayName} • ${currentUser.roleTitle}",
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                         }
                     }
@@ -263,30 +331,62 @@ private fun KikiRootApp(viewModel: MainViewModel = viewModel()) {
                     Column(
                         modifier = Modifier
                             .verticalScroll(rememberScrollState())
-                            .padding(vertical = 8.dp)
+                            .padding(vertical = 10.dp)
                     ) {
-                        allowedSections.forEach { section ->
-                            val selected = section == currentSection
-                            NavigationDrawerItem(
-                                label = { Text(section.title, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
-                                selected = selected,
-                                onClick = {
-                                    currentSection = section
-                                    scope.launch { drawerState.close() }
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = if (selected) section.selectedIcon else section.unselectedIcon,
-                                        contentDescription = section.title
-                                    )
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 10.dp, vertical = 2.dp)
-                                    .testTag("drawer_item_${section.name.lowercase()}")
+                        drawerGroups.forEachIndexed { groupIdx, (groupTitle, itemsInGroup) ->
+                            if (groupIdx > 0) {
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
+                            Text(
+                                text = groupTitle,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)
                             )
+                            itemsInGroup.forEach { section ->
+                                val selected = section == currentSection
+                                NavigationDrawerItem(
+                                    label = {
+                                        Text(
+                                            text = section.title,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    },
+                                    selected = selected,
+                                    onClick = {
+                                        currentSection = section
+                                        scope.launch { drawerState.close() }
+                                    },
+                                    icon = {
+                                        Icon(
+                                            imageVector = if (selected) section.selectedIcon else section.unselectedIcon,
+                                            contentDescription = section.title
+                                        )
+                                    },
+                                    shape = CircleShape,
+                                    colors = NavigationDrawerItemDefaults.colors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        unselectedContainerColor = Color.Transparent,
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp, vertical = 2.dp)
+                                        .height(56.dp)
+                                        .testTag("drawer_item_${section.name.lowercase()}")
+                                )
+                            }
                         }
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(16.dp))
                     }
                 }
             }
@@ -305,7 +405,16 @@ private fun KikiRootApp(viewModel: MainViewModel = viewModel()) {
                     },
                     bottomBar = {
                         if (!isWideScreen && bottomBarSections.isNotEmpty()) {
-                            NavigationBar(windowInsets = WindowInsets.navigationBars) {
+                            NavigationBar(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                tonalElevation = 0.dp,
+                                windowInsets = WindowInsets(0, 0, 0, 0),
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                                    .windowInsetsPadding(WindowInsets.navigationBars)
+                                    .height(80.dp)
+                            ) {
                                 bottomBarSections.forEach { section ->
                                     val selected = section == currentSection
                                     NavigationBarItem(
@@ -317,14 +426,28 @@ private fun KikiRootApp(viewModel: MainViewModel = viewModel()) {
                                                 contentDescription = section.shortTitle
                                             )
                                         },
-                                        label = { Text(section.shortTitle, maxLines = 1) },
+                                        label = {
+                                            Text(
+                                                text = section.shortTitle,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                                maxLines = 1
+                                            )
+                                        },
+                                        colors = NavigationBarItemDefaults.colors(
+                                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                        ),
                                         modifier = Modifier.testTag("nav_tab_${section.name.lowercase()}")
                                     )
                                 }
                             }
                         }
                     },
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) { innerPadding ->
                     Row(
                         modifier = Modifier
@@ -333,6 +456,7 @@ private fun KikiRootApp(viewModel: MainViewModel = viewModel()) {
                     ) {
                         if (isWideScreen) {
                             NavigationRail(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
                                 modifier = Modifier.verticalScroll(rememberScrollState())
                             ) {
                                 allowedSections.forEach { section ->
@@ -346,14 +470,29 @@ private fun KikiRootApp(viewModel: MainViewModel = viewModel()) {
                                                 contentDescription = section.shortTitle
                                             )
                                         },
-                                        label = { Text(section.shortTitle, maxLines = 1) }
+                                        label = { Text(section.shortTitle, maxLines = 1) },
+                                        colors = NavigationRailItemDefaults.colors(
+                                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     )
                                 }
                             }
                         }
 
-                        Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                            when (currentSection) {
+                        AnimatedContent(
+                            targetState = currentSection,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(durationMillis = 200, easing = M3StandardEasing)) togetherWith
+                                    fadeOut(animationSpec = tween(durationMillis = 150, easing = M3StandardEasing))
+                            },
+                            label = "section_transition",
+                            modifier = Modifier.weight(1f).fillMaxSize()
+                        ) { targetSection ->
+                            when (targetSection) {
                                 AppSection.DASHBOARD -> DashboardScreen(
                                     currentUser = currentUser,
                                     dateFilter = uiState.dateFilter,

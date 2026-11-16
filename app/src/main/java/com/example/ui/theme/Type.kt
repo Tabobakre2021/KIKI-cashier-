@@ -18,80 +18,96 @@ val CairoFontFamily = FontFamily(
 val TajawalFontFamily = FontFamily(
     Font(R.font.tajawal, FontWeight.Normal),
     Font(R.font.tajawal, FontWeight.Medium),
+    Font(R.font.tajawal, FontWeight.SemiBold),
     Font(R.font.tajawal, FontWeight.Bold)
 )
+
+// Tabular numerals feature ensures prices, weights, and quantities align cleanly in POS & Inventory
+private const val TABULAR_NUMS = "tnum"
 
 val KikiTypography = Typography(
     displaySmall = TextStyle(
         fontFamily = CairoFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
-        lineHeight = 38.sp
+        fontSize = 32.sp,
+        lineHeight = 40.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     headlineMedium = TextStyle(
         fontFamily = CairoFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
-        lineHeight = 32.sp
+        lineHeight = 32.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     headlineSmall = TextStyle(
         fontFamily = CairoFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp,
-        lineHeight = 28.sp
+        lineHeight = 28.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     titleLarge = TextStyle(
         fontFamily = CairoFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 18.sp,
-        lineHeight = 26.sp
+        fontSize = 19.sp,
+        lineHeight = 26.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     titleMedium = TextStyle(
         fontFamily = CairoFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
-        lineHeight = 24.sp
+        lineHeight = 24.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     titleSmall = TextStyle(
         fontFamily = CairoFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
-        lineHeight = 20.sp
+        lineHeight = 20.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     bodyLarge = TextStyle(
-        fontFamily = TajawalFontFamily,
+        fontFamily = CairoFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        lineHeight = 24.sp
+        lineHeight = 24.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     bodyMedium = TextStyle(
         fontFamily = TajawalFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        lineHeight = 20.sp
+        lineHeight = 20.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     bodySmall = TextStyle(
         fontFamily = TajawalFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
-        lineHeight = 18.sp
+        lineHeight = 18.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     labelLarge = TextStyle(
         fontFamily = CairoFontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
-        lineHeight = 20.sp
+        lineHeight = 20.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     labelMedium = TextStyle(
-        fontFamily = TajawalFontFamily,
+        fontFamily = CairoFontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
-        lineHeight = 16.sp
+        lineHeight = 16.sp,
+        fontFeatureSettings = TABULAR_NUMS
     ),
     labelSmall = TextStyle(
         fontFamily = TajawalFontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
-        lineHeight = 14.sp
+        lineHeight = 14.sp,
+        fontFeatureSettings = TABULAR_NUMS
     )
 )

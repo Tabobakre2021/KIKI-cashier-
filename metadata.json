@@ -1,0 +1,6 @@
+{
+  "name": "KIKI",
+  "description": "نظام محاسبة وإدارة مبيعات ومخزون وأرباح متكامل لمحل KIKI (مركز كي كي للدواجن) يعمل بدون إنترنت",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

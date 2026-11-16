@@ -19,9 +19,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AssignmentReturn
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.AssignmentReturn
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Lock
@@ -30,7 +31,6 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -144,7 +144,7 @@ fun DashboardScreen(
                     KpiStatCard(
                         title = "المرتجعات",
                         value = PricingEngine.formatCurrency(metrics.totalCustomerReturns),
-                        icon = Icons.Filled.AssignmentReturn,
+                        icon = Icons.AutoMirrored.Filled.AssignmentReturn,
                         accent = KikiGold,
                         modifier = Modifier.weight(1f)
                     )
@@ -161,7 +161,7 @@ fun DashboardScreen(
                             title = "مجمل الربح (Gross)",
                             value = PricingEngine.formatCurrency(metrics.grossProfit),
                             subtitle = "التكلفة (COGS): ${PricingEngine.formatAmount(metrics.totalCogs)}",
-                            icon = Icons.Filled.TrendingUp,
+                            icon = Icons.AutoMirrored.Filled.TrendingUp,
                             accent = KikiProfitGreen,
                             containerColor = KikiProfitGreenSoft.copy(alpha = 0.55f),
                             modifier = Modifier.weight(1f)
@@ -170,7 +170,7 @@ fun DashboardScreen(
                             title = "صافي الربح التشغيلي",
                             value = PricingEngine.formatCurrency(metrics.netOperatingProfit),
                             subtitle = "بعد المصروفات التشغيلية",
-                            icon = Icons.Filled.TrendingUp,
+                            icon = Icons.AutoMirrored.Filled.TrendingUp,
                             accent = if (metrics.netOperatingProfit >= 0L) KikiProfitGreen else KikiExpenseRed,
                             containerColor = if (metrics.netOperatingProfit >= 0L) KikiProfitGreenSoft.copy(alpha = 0.75f) else KikiExpenseRedSoft,
                             modifier = Modifier.weight(1f)
@@ -298,7 +298,7 @@ fun DashboardScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (currentUser.canReverseOrDelete || currentUser.isAdmin) {
                             OutlinedButton(onClick = onOpenReturns, modifier = Modifier.weight(1f).heightIn(min = 46.dp)) {
-                                Icon(Icons.Filled.AssignmentReturn, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.AutoMirrored.Filled.AssignmentReturn, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("المرتجعات والتالف", maxLines = 1)
                             }

@@ -46,6 +46,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -57,7 +58,6 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -373,7 +373,7 @@ fun CashierPosScreen(
                                     icon = {
                                         SegmentedButtonDefaults.Icon(active = selected) {
                                             Icon(
-                                                imageVector = if (tab == PosMobileTab.CATALOG) Icons.Filled.Category else Icons.Filled.ReceiptLong,
+                                                imageVector = if (tab == PosMobileTab.CATALOG) Icons.Filled.Category else Icons.AutoMirrored.Filled.ReceiptLong,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(16.dp)
                                             )

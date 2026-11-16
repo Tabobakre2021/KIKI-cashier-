@@ -26,17 +26,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.CallSplit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -89,7 +89,6 @@ import com.example.ui.theme.KikiPrimary
 import com.example.ui.theme.KikiProfitGreen
 import com.example.ui.theme.KikiProfitGreenSoft
 import com.example.ui.theme.KikiSecondaryContainer
-import com.example.ui.theme.KikiOnSecondaryContainer
 
 @Composable
 fun KikiBrandHeader(
@@ -380,7 +379,7 @@ fun MultiPaymentSplitEditor(
                 selected = isSplitMode,
                 onClick = { onSplitModeChange(!isSplitMode) },
                 label = { Text("دفع مشترك (متعدد)", style = MaterialTheme.typography.labelLarge) },
-                leadingIcon = { Icon(Icons.Filled.CallSplit, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.CallSplit, contentDescription = null, modifier = Modifier.size(16.dp)) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.primary,
                     selectedLabelColor = Color.White,
@@ -467,7 +466,7 @@ fun MultiPaymentSplitEditor(
             value = receiptNote,
             onValueChange = onReceiptNoteChange,
             label = { Text("ملاحظات التحصيل / الدفع") },
-            leadingIcon = { Icon(Icons.Filled.ReceiptLong, contentDescription = null) },
+            leadingIcon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )

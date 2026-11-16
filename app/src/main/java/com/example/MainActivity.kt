@@ -36,11 +36,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AssignmentReturn
+import androidx.compose.material.icons.automirrored.outlined.AssignmentReturn
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.AssignmentReturn
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocalShipping
@@ -53,7 +54,6 @@ import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.AssignmentReturn
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.LocalShipping
@@ -145,7 +145,7 @@ private enum class AppSection(
     PURCHASES("المشتريات والتوريد", "المشتريات", Icons.Filled.LocalShipping, Icons.Outlined.LocalShipping),
     INVENTORY("المخزون والتسعير", "المخزون", Icons.Filled.Inventory2, Icons.Outlined.Inventory2),
     EXPENSES("المصروفات التشغيلية", "المصروفات", Icons.Filled.Receipt, Icons.Outlined.Receipt),
-    RETURNS("المرتجعات والتالف", "المرتجعات", Icons.Filled.AssignmentReturn, Icons.Outlined.AssignmentReturn),
+    RETURNS("المرتجعات والتالف", "المرتجعات", Icons.AutoMirrored.Filled.AssignmentReturn, Icons.AutoMirrored.Outlined.AssignmentReturn),
     PARTIES("الموردون والعملاء", "الأطراف", Icons.Filled.People, Icons.Outlined.People),
     WALLETS("المحافظ والتحويلات", "المحافظ", Icons.Filled.AccountBalanceWallet, Icons.Outlined.AccountBalanceWallet),
     ZREPORT("تقفيل اليومية (Z-Report)", "التقفيل", Icons.Filled.AccountBalance, Icons.Outlined.AccountBalance),
